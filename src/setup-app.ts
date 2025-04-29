@@ -1,7 +1,11 @@
 import express, { Express, Request, Response } from "express";
 import { videosDB } from './db/videos.db';
-import {Video} from "./ts-types/Video";
-import {HttpStatus} from "./ts-types/htttp_statuses";
+import {createVideo, Video} from "./ts-types/h01.Video";
+import {HttpStatus} from "./ts-types/h01.Resolution";
+import {CreateVideoInputModel} from "./ts-types/h01.CreateVideoInputModel";
+import {UpdateVideoInputModel} from "./ts-types/h01.UpdateVideoInputModel";
+import {APIErrorResult, ChangeVideoValidation} from "./validation/APIErrorResult";
+import {createErrorMessages} from "./utils/error.utils";
 
 export const setupApp = (app: Express) => {
     app.use(express.json()); // middleware for parsing JSON in Request body
@@ -11,7 +15,7 @@ export const setupApp = (app: Express) => {
         res.status(200).send("It is my first backend program!");
     });
 
-    //GET all ts-types
+    //GET all videos         (checked in postman)
     app.get("/hometask_01/api/videos",(req:Request,res:Response)=>{
         res.status(HttpStatus.Ok).send(videosDB.videos)
     })
@@ -29,36 +33,60 @@ export const setupApp = (app: Express) => {
     app.delete("/hometask_01/api/videos/:id", (req:Request, res:Response)=>{
         const id=parseInt(req.params.id);
         const video = videosDB.videos.find(v => v.id === id);
-        !video ?
-            res.status(HttpStatus.NotFound).send('Not Found') :
-            res.status(HttpStatus.NoContent).send('No content')
+        if (!video) {
+            res.status(HttpStatus.NotFound).send('Not Found')
+            return;
+        }
+        res.status(HttpStatus.NoContent).send('No content')
     })
-    //DELETE testing
+    //DELETE testing         (checked in postman)
     app.delete('/hometask_01/api/testing/all-data', (req: Request, res: Response) => {
         videosDB.videos = [];
         res.sendStatus(HttpStatus.NoContent);
     });
-
-
-    //POST new video
+    //POST new video         (checked in postman)
     app.post("/hometask_01/api/videos",(req:Request,res:Response)=>{
         //1) проверяем приходящие данные на валидность
-
-        //2) создаем newDriver
-        const newVideo:Video ={
-            id: videosDB.videos.length ? videosDB.videos[videosDB.videos.length - 1].id + 1 : 1,
+        const errors = APIErrorResult(req.body);
+        if (errors.length > 0) {
+            res.status(HttpStatus.BadRequest).send(createErrorMessages(errors));
+            return;
+        }
+        //2) создаем newVideo
+        const newVideo: CreateVideoInputModel = {
             title: req.body.title,
             author: req.body.author,
-            canBeDownloaded: req.body.canBeDownloaded,
-            minAgeRestriction: req.body.minAgeRestriction,
-            createdAt: new Date(),
-            publicationDate: new Date(),
             availableResolutions: req.body.availableResolutions
         }
+        const id = videosDB.videos.length ? videosDB.videos[videosDB.videos.length - 1].id + 1 : 1
+        const videoToAdd:Video = createVideo(id, newVideo.title,newVideo.author,newVideo.availableResolutions)
 
         //3) добавляем в БД
-        videosDB.videos.push(newVideo);
-        res.status(HttpStatus.Created).send(newVideo);
+        videosDB.videos.push(videoToAdd);
+        res.status(HttpStatus.Created).send(videoToAdd);
     })
+    //PUT update existing video         (checked in postman)
+    app.put("/hometask_01/api/videos/:id", (req:Request, res: Response)=>{
+        const id = parseInt(req.params.id);
+        const video = videosDB.videos.find(v=>v.id===id);
+        if (!video) {
+            res.status(HttpStatus.NotFound).send('Not Found')
+            return;
+        }
+        // проверяем приходящие данные на валидность
+        const errors = ChangeVideoValidation(req.body);
+        if (errors.length > 0) {
+            res.status(HttpStatus.BadRequest).send(createErrorMessages(errors));
+            return;
+        }
+        video.title = req.body.title;
+        video.author = req.body.author;
+        video.availableResolutions = req.body.availableResolutions;
+        video.canBeDownloaded = req.body.canBeDownloaded;
+        video.minAgeRestriction = req.body.minAgeRestriction;
+        video.publicationDate = req.body.publicationDate;
+        res.status(HttpStatus.NoContent).send('Content changed')
+    })
+
     return app;
 };

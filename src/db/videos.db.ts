@@ -1,4 +1,4 @@
-import {Video} from "../ts-types/Video";
+import {Video} from "../ts-types/h01.Video";
 export const videosDB ={
     videos:<Video[]>[
         {

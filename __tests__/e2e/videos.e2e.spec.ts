@@ -1,29 +1,32 @@
 import request from "supertest";
 import express from "express";
 import {setupApp} from "../../src/setup-app";
-import {HttpStatus} from "../../src/ts-types/htttp_statuses";
-import {Video_Test_dto} from "../../src/ts-types/Video_Test_dto";
-import {videoResolutions} from "../../src/ts-types/Video";
+import {HttpStatus} from "../../src/ts-types/h01.Resolution";
+import {Video, videoResolutions} from "../../src/ts-types/h01.Video";
+import {CreateVideoInputModel} from "../../src/ts-types/h01.CreateVideoInputModel";
 
-describe('Driver API', () => {
+describe('Videos API', () => {
     //стартуем приложение для тестов (не влияет на скрипт watch и dev)
     const app = express();
-    setupApp(app);
-    //создаем тестовый объект
-    const testVideo: Video_Test_dto = {
-        title: 'Test title',
-        author: 'Test author',
-        canBeDownloaded: true,
-        minAgeRestriction: 18,
-        availableResolutions: []
-    };
-    //перед запуском каждой функции теста очищаем данные в ноль
-    beforeAll(async () => {
-        await request(app).delete('/hometask_01/api/testing/all-data').expect(HttpStatus.NoContent);
+    beforeAll(() => {
+        setupApp(app);
     });
+
+    // Очищаем базу данных перед каждым тестом
+    beforeEach(async () => {
+        await request(app)
+            .delete('/hometask_01/api/testing/all-data')
+            .expect(HttpStatus.NoContent);
+    });
+    //создаем тестовый объект
+    const testVideo: CreateVideoInputModel = {
+        title: "test title",
+        author: "test author",
+        availableResolutions: [videoResolutions.P720]
+    }
     //testing
-    it('should create video; POST new videos', async () => {
-        const newVideo: Video_Test_dto = {
+    it('should create video; POST new video', async () => {
+        const newVideo: CreateVideoInputModel = {
             ...testVideo,
             title: 'Samurai',
             author: 'Ivan',
@@ -35,6 +38,33 @@ describe('Driver API', () => {
             .send(newVideo)
             .expect(HttpStatus.Created);
     });
+    it('should return list of videos', async  ()=>{
+        await request(app)
+            .post('/hometask_01/api/videos')
+            .send({ ...testVideo, title: 'A new title' })
+            .expect(HttpStatus.Created);
+        await request(app)
+            .post('/hometask_01/api/videos')
+            .send({ ...testVideo, title: 'Another title' })
+            .expect(HttpStatus.Created);
+        await request(app)
+            .get('/hometask_01/api/videos')
+            .expect(HttpStatus.Ok);
+    })
+    it('should return video by id', async ()=>{
+        const createResponse = await request(app)
+            .post('/hometask_01/api/videos')
+            .send({ ...testVideo, title: 'Another new title' })
+            .expect(HttpStatus.Created);
+
+        const getResponse = await request(app)
+            .get(`/hometask_01/api/videos/${createResponse.body.id}`)
+            .expect(HttpStatus.Ok);
+
+        expect(getResponse.body[0]).toEqual({
+            ...createResponse.body
+        });
+    })
 });
 
 
