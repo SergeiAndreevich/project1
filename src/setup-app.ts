@@ -1,11 +1,20 @@
-import express, { Express } from "express";
+import express, { Express} from "express";
+import {HttpStatus} from "./ts-types/h01.Resolution";
+import {videosRouter} from "./routers/videos.router";
+import {testingRouter} from "./routers/testing.router";
+import {setupSwagger} from "./utils/swagger/setup-swagger";
 
 export const setupApp = (app: Express) => {
-    app.use(express.json()); // middleware для парсинга JSON в теле запроса
+    app.use(express.json());
 
-    // основной роут
     app.get("/", (req, res) => {
-        res.status(200).send("Hello world!");
+        res.status(HttpStatus.Ok).send("It is my first backend program!");
     });
+
+    // Подключаем роутеры
+    app.use("/hometask_01/api/videos", videosRouter);
+    app.use("/hometask_01/api/testing", testingRouter);
+
+    setupSwagger(app);
     return app;
 };
