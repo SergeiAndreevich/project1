@@ -6,7 +6,7 @@ export const testingRouter = Router({});
 
 //DELETE testing         (checked in postman)
 testingRouter
-    .delete('/hometask_01/api/testing/all-data', (req: Request, res: Response) => {
+    .delete('/all-data', (req: Request, res: Response) => {
     videosDB.videos = [];
     res.sendStatus(HttpStatus.NoContent)
 });

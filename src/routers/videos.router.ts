@@ -10,11 +10,11 @@ export const videosRouter = Router({});
 
 //GET all videos         (checked in postman)
 videosRouter
-    .get("/hometask_01/api/videos",(req:Request,res:Response)=>{
+    .get("/",(req:Request,res:Response)=>{
     res.status(HttpStatus.Ok).send(videosDB.videos)
 })
 //GET video by id
-    .get("/hometask_01/api/videos/:id",(req:Request,res:Response)=>{
+    .get("/:id",(req:Request,res:Response)=>{
     const id = parseInt(req.params.id);
     const video = videosDB.videos.find(v => v.id === id);
     if (!video) {
@@ -24,7 +24,7 @@ videosRouter
     res.status(HttpStatus.Ok).send(videosDB.videos)
 })
 //DELETE video by id
-    .delete("/hometask_01/api/videos/:id", (req:Request, res:Response)=>{
+    .delete("/:id", (req:Request, res:Response)=>{
     const id=parseInt(req.params.id);
     const video = videosDB.videos.find(v => v.id === id);
     if (!video) {
@@ -34,7 +34,7 @@ videosRouter
     res.status(HttpStatus.NoContent).send('No content')
 })
 //POST new video         (checked in postman)
-    .post("/hometask_01/api/videos",(req:Request,res:Response)=>{
+    .post("/",(req:Request,res:Response)=>{
     //1) проверяем приходящие данные на валидность
     const errors = APIErrorResult(req.body);
     if (errors.length > 0) {
@@ -55,7 +55,7 @@ videosRouter
     res.status(HttpStatus.Created).send(videoToAdd);
 })
 //PUT update existing video         (checked in postman)
-    .put("/hometask_01/api/videos/:id", (req:Request, res: Response)=>{
+    .put("/:id", (req:Request, res: Response)=>{
     const id = parseInt(req.params.id);
     const video = videosDB.videos.find(v=>v.id===id);
     if (!video) {
